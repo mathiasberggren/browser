@@ -6,5 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-html_parser = "0.6.3"
-cssparser = "0.29.6"
+reqwest = "*"
+html5ever = "*"
+cssparser = "*"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
