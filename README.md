@@ -6,9 +6,38 @@
 An implementation of a browser
 Inspired by https://github.com/servo/servo
 
-These are the parts currently implemented.
+These are the parts currently planned.
 
-- [ ] HTTP Client
+- [ ] Network Layer
 - [ ] HTML Parser
 - [ ] CSS Parser
+- [ ] Render Engine
 - [ ] Javascript Engine
+- [ ] User Interface
+
+## Architecture
+
+
+                  ┌──────────────────┐
+                  │  User Interface  │
+                  └────────┬─────────┘
+                           │
+                           ▼
+                  ┌──────────────────┐
+                  │  Browser engine  │
+                  │  ( not planned ) │
+                  └────────┬─────────┘
+                           │
+                           ▼
+           ┌──────────────────────────────────┐
+           │          Render engine           │
+           │                                  │
+           │ ┌─────────────┐  ┌─────────────┐ │
+           │ │  CSS Parser │  │ HTML Parser │ │
+           │ └─────────────┘  └─────────────┘ │
+           └───────┬─────────────────┬────────┘
+                   │                 │
+                   ▼                 ▼
+            ┌────────────┐    ┌──────────────┐
+            │   Network  │    │  JS Engine   │
+            └────────────┘    └──────────────┘
