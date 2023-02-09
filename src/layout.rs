@@ -1,7 +1,8 @@
 use html5ever::{namespace_url, ns, LocalName, QualName};
 use markup5ever_rcdom::{Handle, NodeData};
 
-// Right now, print to terminal
+// Right now, let's just print to terminal.
+// We will change this once we have a layout engine.
 pub fn print_to_terminal(dom: &Handle) -> () {
     let node = dom;
 
@@ -22,7 +23,7 @@ pub fn print_to_terminal(dom: &Handle) -> () {
                     println!("Link: {}", attr.value);
                 }
             }
-        }
+        },
         _ => {}
     }
     for child in node.children.borrow().iter() {

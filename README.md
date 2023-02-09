@@ -33,7 +33,7 @@ These are the parts currently planned.
            │          Render engine           │
            │                                  │
            │ ┌─────────────┐  ┌─────────────┐ │
-           │ │  CSS Parser │  │ HTML Parser │ │
+           │ │ CSS Parser  │  │ HTML Parser │ │
            │ └─────────────┘  └─────────────┘ │
            └───────┬─────────────────┬────────┘
                    │                 │
@@ -41,3 +41,4 @@ These are the parts currently planned.
             ┌────────────┐    ┌──────────────┐
             │   Network  │    │  JS Engine   │
             └────────────┘    └──────────────┘
+

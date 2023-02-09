@@ -15,11 +15,12 @@ async fn main() -> Result<(), reqwest::Error> {
     };
 
     let doc = net::get_webpage(&url).await?;
-    // How is a mut ref possible to an immutable value?/?
     let html = parse_html()
         .from_utf8()
+        // How is a mut ref possible to an immutable value?/?
         .read_from(&mut doc.as_bytes())
         .unwrap();
     print_to_terminal(&html.document);
+    println!("{:?}", &doc);
     Ok(())
 }
