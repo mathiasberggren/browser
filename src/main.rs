@@ -1,25 +1,25 @@
-use html5ever::{parse_document};
-// use http::{Request};
-// use std::net::Shutdown::Write;
-
-use reqwest::get;
+use html5ever::tendril::TendrilSink;
+use rush::{layout::print_to_terminal, net, parser::parse_html};
+use std::env;
 
 #[tokio::main]
-async fn main() {
-    let body = get_webpage("https://www.rust-lang.org").await.unwrap();
-    parse_document(body, TokenizerOpts(true, true, true));
+// TODO (alivenotions): Add a custom error here
+async fn main() -> Result<(), reqwest::Error> {
+    let url = match env::args().nth(1) {
+        Some(url) => url,
+        None => {
+            println!("No URL provided, using default.");
+            // TODO (alivenotions): replace with rush's homepage 🙃
+            "https://alivenotions.com".into()
+        }
+    };
 
-    println!("This is the body {:?}", body);
-
-}
-
-async fn get_webpage(url: &str) -> Option<String> {
-    let body = get(url)
-    .await
-    .ok()?
-    .text()
-    .await
-    .ok()?;
-
-    return Some(body);
+    let doc = net::get_webpage(&url).await?;
+    // How is a mut ref possible to an immutable value?/?
+    let html = parse_html()
+        .from_utf8()
+        .read_from(&mut doc.as_bytes())
+        .unwrap();
+    print_to_terminal(&html.document);
+    Ok(())
 }

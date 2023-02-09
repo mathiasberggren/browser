@@ -1,5 +1,5 @@
 [package]
-name = "browser"
+name = "rush"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,3 +10,4 @@ reqwest = "*"
 html5ever = "*"
 cssparser = "*"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+markup5ever_rcdom = "0.2.0"
