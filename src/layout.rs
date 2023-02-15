@@ -23,7 +23,7 @@ pub fn print_to_terminal(dom: &Handle) -> () {
                     println!("Link: {}", attr.value);
                 }
             }
-        },
+        }
         _ => {}
     }
     for child in node.children.borrow().iter() {
