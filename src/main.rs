@@ -1,5 +1,5 @@
 use html5ever::tendril::TendrilSink;
-use rush::{layout::print_to_terminal, net, parser::parse_html};
+use rush::{layout::print_to_terminal, net, parser::parse_html, window};
 use std::env;
 use url::Url;
 
@@ -15,6 +15,8 @@ async fn main() -> Result<(), reqwest::Error> {
         }
     };
 
+    window::create_window();
+
     println!("url: {}", url);
     let doc = net::get_webpage(&url).await?;
     let html = parse_html()
@@ -22,7 +24,7 @@ async fn main() -> Result<(), reqwest::Error> {
         // How is a mut ref possible to an immutable value?/?
         .read_from(&mut doc.as_bytes())
         .unwrap();
-    // print_to_terminal(&html.document);
+    print_to_terminal(&html.document);
     Ok(())
 }
 
