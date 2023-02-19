@@ -84,6 +84,10 @@ impl BrowserToolbar {
         self.url_bar.set_text(url);
     }
 
+    pub fn get_url(&self) -> String {
+        return self.url_bar.get_value();
+    }
+
     fn item_identifiers(&self) -> Vec<ItemIdentifier> {
         vec![
             ItemIdentifier::Custom(BACK_BUTTON),
