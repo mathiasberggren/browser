@@ -905,6 +905,7 @@ dependencies = [
  "cacao",
  "cssparser",
  "html5ever",
+ "lazy_static",
  "markup5ever_rcdom",
  "reqwest",
  "tokio",
