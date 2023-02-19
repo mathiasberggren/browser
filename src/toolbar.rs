@@ -22,10 +22,6 @@ impl TextFieldDelegate for URLBar {
         Action::UrlBarSelected.dispatch();
     }
 
-    fn text_did_change(&self, value: &str) {
-        Action::UrlBarChanged(value.to_string()).dispatch();
-    }
-
     fn text_did_end_editing(&self, _value: &str) {
         Action::UrlBarDeselected.dispatch();
     }
