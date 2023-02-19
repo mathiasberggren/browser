@@ -1,3 +1,9 @@
+// For using flush
+use std::io::{self, Write};
+
+// To create a singleton instance of the url in the toolbar
+use lazy_static::lazy_static;
+
 use cacao::notification_center::Dispatcher;
 use cacao::webview::{WebView, WebViewConfig, WebViewDelegate};
 
@@ -13,7 +19,10 @@ use crate::toolbar::BrowserToolbar;
 pub enum Action {
     Back,
     Forwards,
-    Load(String)
+    Reload,
+    Load(String),
+    UrlBarSelected,
+    UrlBarDeselected
 }
 
 impl Action {
@@ -22,7 +31,7 @@ impl Action {
     }
 }
 
-struct BasicApp {
+pub struct BasicApp {
     window: Window<AppWindow>
 }
 
@@ -64,12 +73,18 @@ impl AppDelegate for BasicApp {
     }
 }
 
+
+
 impl Dispatcher for BasicApp {
     type Message = Action;
 
+
+    // Main event loop
     fn on_ui_message(&self, message: Self::Message) {
         let window = self.window.delegate.as_ref().unwrap();
         let webview = &window.content;
+
+        println!("Action: {:?} was triggered", message);
 
         match message {
             Action::Back => {
@@ -80,8 +95,19 @@ impl Dispatcher for BasicApp {
             },
             Action::Load(url) => {
                 window.load_url(&url);
+            },
+            Action::Reload => {
+                let url = window.toolbar.delegate.as_ref().unwrap().get_url();
+                window.load_url(&url);
             }
+            Action::UrlBarSelected => {
+                
+            },
+            Action::UrlBarDeselected => {
+
+            },
         }
+        let _result = io::stdout().flush();
     }
 }
 
@@ -99,7 +125,7 @@ struct AppWindow {
 impl AppWindow {
     pub fn new() -> Self {
         AppWindow {
-            toolbar: Toolbar::new("com.example.BrowserToolbar", BrowserToolbar::new()),
+            toolbar: Toolbar::new("com.rush.BrowserToolbar", BrowserToolbar::new()),
             content: WebView::with(WebViewConfig::default(), WebViewInstance::default())
         }
     }
@@ -126,8 +152,8 @@ impl WindowDelegate for AppWindow {
 }
 
 
-pub fn create_window() {
-    App::new("com.test.window", BasicApp {
+pub fn create_window() -> App<BasicApp> {
+    return App::new("com.test.window", BasicApp {
         window: Window::with(
             {
                 let mut config = WindowConfig::default();
@@ -140,5 +166,4 @@ pub fn create_window() {
             AppWindow::new()
         )
     })
-    .run();
 }
