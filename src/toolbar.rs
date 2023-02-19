@@ -9,6 +9,7 @@ use crate::window::Action;
 
 const BACK_BUTTON: &str = "BackButton";
 const FWDS_BUTTON: &str = "FwdsButton";
+const RELOAD_BUTTON: &str = "ReloadButton";
 const URL_BAR: &str = "URLBar";
 
 #[derive(Debug)]
@@ -17,8 +18,16 @@ pub struct URLBar;
 impl TextFieldDelegate for URLBar {
     const NAME: &'static str = "URLBar";
 
-    fn text_did_end_editing(&self, value: &str) {
-        Action::Load(value.to_string()).dispatch();
+    fn text_did_begin_editing(&self, _value: &str) {
+        Action::UrlBarSelected.dispatch();
+    }
+
+    fn text_did_change(&self, value: &str) {
+        Action::UrlBarChanged(value.to_string()).dispatch();
+    }
+
+    fn text_did_end_editing(&self, _value: &str) {
+        Action::UrlBarDeselected.dispatch();
     }
 }
 
@@ -26,6 +35,7 @@ impl TextFieldDelegate for URLBar {
 pub struct BrowserToolbar {
     back_item: ToolbarItem,
     forwards_item: ToolbarItem,
+    reload_item: ToolbarItem,
     url_bar: TextField<URLBar>,
     url_bar_item: ToolbarItem
 }
@@ -41,6 +51,12 @@ impl BrowserToolbar {
         let mut forwards_item = ToolbarItem::new(FWDS_BUTTON);
         forwards_item.set_button(forwards_button);
         forwards_item.set_action(|| Action::Forwards.dispatch());
+
+
+        let reload_button = Button::new("Reload");
+        let mut reload_item = ToolbarItem::new(RELOAD_BUTTON);
+        reload_item.set_button(reload_button);
+        reload_item.set_action(|| Action::Reload.dispatch());
 
         let url_bar = TextField::with(URLBar);
         let url_bar_item = ToolbarItem::new(URL_BAR);
@@ -58,6 +74,7 @@ impl BrowserToolbar {
         BrowserToolbar {
             back_item,
             forwards_item,
+            reload_item,
             url_bar,
             url_bar_item
         }
@@ -71,6 +88,7 @@ impl BrowserToolbar {
         vec![
             ItemIdentifier::Custom(BACK_BUTTON),
             ItemIdentifier::Custom(FWDS_BUTTON),
+            ItemIdentifier::Custom(RELOAD_BUTTON),
             ItemIdentifier::Space,
             ItemIdentifier::Custom(URL_BAR),
             ItemIdentifier::Space,
@@ -97,6 +115,7 @@ impl ToolbarDelegate for BrowserToolbar {
         match identifier {
             BACK_BUTTON => &self.back_item,
             FWDS_BUTTON => &self.forwards_item,
+            RELOAD_BUTTON => &self.reload_item,
             URL_BAR => &self.url_bar_item,
             _ => {
                 std::unreachable!();
