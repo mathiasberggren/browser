@@ -26,12 +26,7 @@ async fn main() -> Result<(), reqwest::Error> {
         println!("Available device: {}", physical_device.properties().device_name);
     };
 
-    // ignore this for now
     let event_loop = EventLoop::new();  
-
-    // let window = Arc::new(WindowBuilder::new()
-    //     .build(&event_loop)
-    //     .unwrap());
 
 
     // Had to downgrade winit to 0.27.5 to get this to work
@@ -39,7 +34,6 @@ async fn main() -> Result<(), reqwest::Error> {
         .build_vk_surface(&event_loop, instance.clone())
         .unwrap();
 
-    // let surface = create_surface_from_winit(window, instance).unwrap();
     use winit::event::{Event, WindowEvent};
     use winit::event_loop::ControlFlow;
         
@@ -56,8 +50,6 @@ async fn main() -> Result<(), reqwest::Error> {
         }
     });
 
-    // To ensure that only complete images are shown, Vulkan uses what is called a swapchain.
-    // Basically we draw everything that is going to be rendered on a separate screen before displaying it.
     use vulkano::device::DeviceExtensions;
 
     let device_extensions = DeviceExtensions {
@@ -68,6 +60,57 @@ async fn main() -> Result<(), reqwest::Error> {
     // make sure we select the best device possible for rendering, prefereably a GPU
     let (physical_device, queue_family_index) = select_physical_device(&instance, &surface, &device_extensions);
 
+    use vulkano::device::{Device, DeviceCreateInfo, QueueCreateInfo};
+
+    let (device, mut queues) = Device::new(
+        physical_device.clone(),
+        DeviceCreateInfo {
+            queue_create_infos: vec![QueueCreateInfo {
+                queue_family_index,
+                ..Default::default()
+            }],
+            enabled_extensions: device_extensions,
+            ..Default::default()
+        },
+    )
+    .expect("failed to create device");
+    
+    let queue = queues.next().unwrap();
+
+    let caps = physical_device
+        .surface_capabilities(&surface, Default::default())
+        .expect("failed to get surface capabilities");
+
+    let dimensions = surface.window().inner_size();
+    let composite_alpha = caps.supported_composite_alpha.iter().next().unwrap();
+    let image_format = Some(
+        physical_device
+            .surface_formats(&surface, Default::default())
+            .unwrap()[0]
+            .0,
+    );
+
+
+    use vulkano::image::ImageUsage;
+    use vulkano::swapchain::{Swapchain, SwapchainCreateInfo};
+
+    // To ensure that only complete images are shown, Vulkan uses what is called a swapchain.
+    // Basically we draw everything that is going to be rendered on a separate screen before displaying it.
+    let (swapchain, images) = Swapchain::new(
+        device.clone(),
+        surface.clone(),
+        SwapchainCreateInfo {
+            min_image_count: caps.min_image_count + 1, // How many buffers to use in the swapchain
+            image_format,
+            image_extent: dimensions.into(),
+            image_usage: ImageUsage {
+                color_attachment: true,  // What the images are going to be used for
+                ..Default::default()
+            },
+            composite_alpha,
+            ..Default::default()
+        },
+    ).unwrap();
 
 
 }
