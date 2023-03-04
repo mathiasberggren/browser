@@ -4,35 +4,42 @@ use rush::swapchain::{select_physical_device};
 use vulkano::VulkanLibrary;
 use vulkano::swapchain::Surface;
 use vulkano::{instance::Instance, instance::InstanceCreateInfo};
-use vulkano_win::create_surface_from_winit;
+use vulkano_win::{create_surface_from_winit, VkSurfaceBuild};
 use winit::event_loop::{EventLoop};
 use winit::window::{WindowBuilder};
 
 #[tokio::main]
 async fn main() -> Result<(), reqwest::Error> {
-
     let library = VulkanLibrary::new().expect("no local Vulkan library/DLL");
-    let instance = Instance::new(library, InstanceCreateInfo {
-        enumerate_portability: true,
-        ..Default::default()
-    }).expect("failed to create instance");
+    let required_extensions = vulkano_win::required_extensions(&library);
+    let instance = Instance::new(
+        library,
+        InstanceCreateInfo {
+            enumerate_portability: true,
+            enabled_extensions: required_extensions,
+            ..Default::default()
+        }
+    ).expect("failed to create instance");;
+
 
     for physical_device in instance.enumerate_physical_devices().unwrap() {
         println!("Available device: {}", physical_device.properties().device_name);
     };
 
+    // ignore this for now
+    let event_loop = EventLoop::new();  
 
-    let event_loop = EventLoop::new();  // ignore this for now
+    // let window = Arc::new(WindowBuilder::new()
+    //     .build(&event_loop)
+    //     .unwrap());
 
 
-    let window = Arc::new(WindowBuilder::new()
-        .build(&event_loop)
-        .unwrap());
+    // Had to downgrade winit to 0.27.5 to get this to work
+    let surface = WindowBuilder::new()
+        .build_vk_surface(&event_loop, instance.clone())
+        .unwrap();
 
-    // The surface is a cross-platform abstraction over the actual window object, that Vulkano can use for rendering
-    // Had to downgrade winit to 0.27.5 to not get a package conflict
-    let surface = create_surface_from_winit(window, instance).unwrap();
-
+    // let surface = create_surface_from_winit(window, instance).unwrap();
     use winit::event::{Event, WindowEvent};
     use winit::event_loop::ControlFlow;
         

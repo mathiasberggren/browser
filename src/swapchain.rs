@@ -4,10 +4,11 @@ use vulkano::device::DeviceExtensions;
 use vulkano::device::physical::{PhysicalDevice, PhysicalDeviceType};
 use vulkano::instance::Instance;
 use vulkano::swapchain::Surface;
+use winit::window::Window;
 
 pub fn select_physical_device(
     instance: &Arc<Instance>,
-    surface: &Arc<Surface>,
+    surface: &Arc<Surface<Window>>,
     device_extensions: &DeviceExtensions,
 ) -> (Arc<PhysicalDevice>, u32) {
     instance
