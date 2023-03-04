@@ -12,5 +12,12 @@ cssparser = "*"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 markup5ever_rcdom = "0.2.0"
 url = "2.3.1"
+<<<<<<< HEAD
 cacao = { version = "*", features = ["webview"] }
 lazy_static = "*"
+=======
+glium = "0.32.1"
+vulkano = "0.32.3"
+winit = "0.28.2"
+vulkano-win = "0.32.0"
+>>>>>>> fd27fa2 (Render a window)
