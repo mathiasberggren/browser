@@ -1,9 +1,12 @@
 use std::sync::Arc;
 
-use vulkano::device::DeviceExtensions;
+use vulkano::device::{DeviceExtensions, Device};
 use vulkano::device::physical::{PhysicalDevice, PhysicalDeviceType};
 use vulkano::instance::Instance;
-use vulkano::swapchain::Surface;
+use vulkano::swapchain::{Surface, Swapchain};
+use vulkano::render_pass::{RenderPass, Framebuffer, FramebufferCreateInfo};
+use vulkano::image::view::ImageView;
+use vulkano::image::SwapchainImage;
 use winit::window::Window;
 
 pub fn select_physical_device(
@@ -39,4 +42,44 @@ pub fn select_physical_device(
             _ => 4,
         })
         .expect("no device available")
+}
+
+pub fn get_render_pass(device: Arc<Device>, swapchain: &Arc<Swapchain<Window>>) -> Arc<RenderPass> {
+    vulkano::single_pass_renderpass!(
+        device,
+        attachments: {
+            color: {
+                load: Clear,
+                store: Store,
+                format: swapchain.image_format(),  // set the format the same as the swapchain
+                samples: 1,
+            }
+        },
+        pass: {
+            color: [color],
+            depth_stencil: {}
+        }
+    )
+    .unwrap()
+}
+
+
+pub fn get_framebuffers(
+    images: &[Arc<SwapchainImage<Window>>],
+    render_pass: &Arc<RenderPass>,
+) -> Vec<Arc<Framebuffer>> {
+    images
+        .iter()
+        .map(|image| {
+            let view = ImageView::new_default(image.clone()).unwrap();
+            Framebuffer::new(
+                render_pass.clone(),
+                FramebufferCreateInfo {
+                    attachments: vec![view],
+                    ..Default::default()
+                },
+            )
+            .unwrap()
+        })
+        .collect::<Vec<_>>()
 }
