@@ -1,12 +1,40 @@
-use std::sync::Arc;
-
-use rush::swapchain::{select_physical_device};
+use rush::swapchain::{select_physical_device, get_render_pass, get_framebuffers};
+use rush::pipeline::{get_pipeline, get_command_buffers, Vertex};
 use vulkano::VulkanLibrary;
-use vulkano::swapchain::Surface;
+use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
+use vulkano::pipeline::graphics::viewport::Viewport;
 use vulkano::{instance::Instance, instance::InstanceCreateInfo};
-use vulkano_win::{create_surface_from_winit, VkSurfaceBuild};
-use winit::event_loop::{EventLoop};
-use winit::window::{WindowBuilder};
+use vulkano_win::VkSurfaceBuild;
+use vulkano::swapchain::SwapchainCreationError;
+use winit::event_loop::EventLoop;
+use winit::window::WindowBuilder;
+
+
+
+mod vs {
+    vulkano_shaders::shader! {
+        ty: "vertex",
+        src: "
+#version 450
+layout(location = 0) in vec2 position;
+void main() {
+gl_Position = vec4(position, 0.0, 1.0);
+}"
+    }
+}
+
+mod fs {
+    vulkano_shaders::shader! {
+        ty: "fragment",
+        src: "
+#version 450
+layout(location = 0) out vec4 f_color;
+void main() {
+f_color = vec4(1.0, 0.0, 0.0, 1.0);
+}"
+    }
+}
+
 
 #[tokio::main]
 async fn main() -> Result<(), reqwest::Error> {
@@ -37,18 +65,6 @@ async fn main() -> Result<(), reqwest::Error> {
     use winit::event::{Event, WindowEvent};
     use winit::event_loop::ControlFlow;
         
-    // Create infinity loop
-    event_loop.run(|event, _, control_flow| {
-        match event {
-            Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                ..
-            } => {
-                *control_flow = ControlFlow::Exit;
-            },
-            _ => ()
-        }
-    });
 
     use vulkano::device::DeviceExtensions;
 
@@ -62,6 +78,7 @@ async fn main() -> Result<(), reqwest::Error> {
 
     use vulkano::device::{Device, DeviceCreateInfo, QueueCreateInfo};
 
+    // Create a logical device to support the swapchain
     let (device, mut queues) = Device::new(
         physical_device.clone(),
         DeviceCreateInfo {
@@ -77,6 +94,7 @@ async fn main() -> Result<(), reqwest::Error> {
     
     let queue = queues.next().unwrap();
 
+    // Settings for the swapchain should be based on the settings of the surface
     let caps = physical_device
         .surface_capabilities(&surface, Default::default())
         .expect("failed to get surface capabilities");
@@ -96,7 +114,7 @@ async fn main() -> Result<(), reqwest::Error> {
 
     // To ensure that only complete images are shown, Vulkan uses what is called a swapchain.
     // Basically we draw everything that is going to be rendered on a separate screen before displaying it.
-    let (swapchain, images) = Swapchain::new(
+    let  (mut swapchain, images) = Swapchain::new(
         device.clone(),
         surface.clone(),
         SwapchainCreateInfo {
@@ -113,5 +131,113 @@ async fn main() -> Result<(), reqwest::Error> {
     ).unwrap();
 
 
+    let vertex1 = Vertex {
+        position: [-0.5, -0.5],
+    };
+    let vertex2 = Vertex {
+        position: [0.0, 0.5],
+    };
+    let vertex3 = Vertex {
+        position: [0.5, -0.25],
+    };
+    let vertex_buffer = CpuAccessibleBuffer::from_iter(
+        device.clone(),
+        BufferUsage {
+            vertex_buffer: true,
+            ..Default::default()
+        },
+        false,
+        vec![vertex1, vertex2, vertex3].into_iter(),
+    )
+    .unwrap();
+
+    let vs = vs::load(device.clone()).expect("failed to create shader module");
+    let fs = fs::load(device.clone()).expect("failed to create shader module");
+
+    let render_pass = get_render_pass(device.clone(), &swapchain);
+    let framebuffers = get_framebuffers(&images, &render_pass);
+
+    let mut viewport = Viewport {
+        origin: [0.0, 0.0],
+        dimensions: surface.window().inner_size().into(),
+        depth_range: 0.0..1.0,
+    };
+
+    let pipeline = get_pipeline(
+        device.clone(),
+        vs.clone(),
+        fs.clone(),
+        render_pass.clone(),
+        viewport.clone(),
+    );
+
+    let mut command_buffers =
+    get_command_buffers(&device, &queue, &pipeline, &framebuffers, &vertex_buffer);
+
+
+    // main()
+
+    // Create infinity loop
+    let mut window_resized = false;
+    let mut recreate_swapchain = false;
+    
+    event_loop.run(move |event, _, control_flow| match event {
+        Event::WindowEvent {
+            event: WindowEvent::CloseRequested,
+            ..
+        } => {
+            *control_flow = ControlFlow::Exit;
+        }
+        Event::WindowEvent {
+            event: WindowEvent::Resized(_),
+            ..
+        } => {
+            window_resized = true;
+        }
+        Event::MainEventsCleared => {}
+        Event::RedrawEventsCleared => {
+            if window_resized || recreate_swapchain {
+                recreate_swapchain = false;
+            
+                let new_dimensions = surface.window().inner_size();
+            
+                let (new_swapchain, new_images) = match swapchain.recreate(SwapchainCreateInfo {
+                    image_extent: new_dimensions.into(),
+                    ..swapchain.create_info()
+                }) {
+                    Ok(r) => r,
+                    Err(SwapchainCreationError::ImageExtentNotSupported { .. }) => return,
+                    Err(e) => panic!("Failed to recreate swapchain: {:?}", e),
+                };
+                swapchain = new_swapchain;
+                let new_framebuffers = get_framebuffers(&new_images, &render_pass);
+            
+                if window_resized {
+                    window_resized = false;
+            
+                    viewport.dimensions = new_dimensions.into();
+                    let new_pipeline = get_pipeline(
+                        device.clone(),
+                        vs.clone(),
+                        fs.clone(),
+                        render_pass.clone(),
+                        viewport.clone(),
+                    );
+                    command_buffers = get_command_buffers(
+                        &device,
+                        &queue,
+                        &new_pipeline,
+                        &new_framebuffers,
+                        &vertex_buffer,
+                    );
+                }
+            }
+            
+        }
+        _ => (),
+    });
+
+
 }
+
 
