@@ -25,6 +25,8 @@ pub fn select_physical_device(
                 // Find the first first queue family that is suitable.
                 // If none is found, `None` is returned to `filter_map`,
                 // which disqualifies this physical device.
+                // Here we specify that the queue family should preferably manage graphics
+                // Once this function call succeeds we have an open channel of communication with a Vulkan device!
                 .position(|(i, q)| {
                     q.queue_flags.graphics && p.surface_support(i as u32, &surface).unwrap_or(false)
                 })
