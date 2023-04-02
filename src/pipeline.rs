@@ -1,7 +1,24 @@
 use std::sync::Arc;
 
 use bytemuck::{Pod, Zeroable};
-use vulkano::{device::{Device, Queue}, shader::ShaderModule, render_pass::{RenderPass, Subpass, Framebuffer}, pipeline::{graphics::{viewport::{Viewport, ViewportState}, vertex_input::{BuffersDefinition}, input_assembly::InputAssemblyState}, GraphicsPipeline}, buffer::{CpuAccessibleBuffer, TypedBufferAccess}, command_buffer::{PrimaryAutoCommandBuffer, AutoCommandBufferBuilder, CommandBufferUsage, RenderPassBeginInfo, SubpassContents}};
+use vulkano::{
+    buffer::{CpuAccessibleBuffer, TypedBufferAccess},
+    command_buffer::{
+        AutoCommandBufferBuilder, CommandBufferUsage, PrimaryAutoCommandBuffer,
+        RenderPassBeginInfo, SubpassContents,
+    },
+    device::{Device, Queue},
+    pipeline::{
+        graphics::{
+            input_assembly::InputAssemblyState,
+            vertex_input::BuffersDefinition,
+            viewport::{Viewport, ViewportState},
+        },
+        GraphicsPipeline,
+    },
+    render_pass::{Framebuffer, RenderPass, Subpass},
+    shader::ShaderModule,
+};
 
 #[repr(C)]
 #[derive(Default, Copy, Clone, Zeroable, Pod)]
@@ -9,8 +26,6 @@ pub struct Vertex {
     pub position: [f32; 2],
 }
 vulkano::impl_vertex!(Vertex, position);
-
-
 
 pub fn get_pipeline(
     device: Arc<Device>,
@@ -29,7 +44,6 @@ pub fn get_pipeline(
         .build(device)
         .unwrap()
 }
-
 
 pub fn get_command_buffers(
     device: &Arc<Device>,

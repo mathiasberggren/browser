@@ -1,11 +1,11 @@
-use rush::swapchain::{select_physical_device, get_render_pass, get_framebuffers};
-use rush::pipeline::{get_pipeline, get_command_buffers, Vertex};
-use vulkano::VulkanLibrary;
-use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
+use rush::pipeline::{get_command_buffers, get_pipeline, Vertex};
+use rush::swapchain::{get_framebuffers, get_render_pass, select_physical_device};
+use vulkano::buffer::{BufferUsage, CpuAccessibleBuffer};
 use vulkano::pipeline::graphics::viewport::Viewport;
+use vulkano::swapchain::SwapchainCreationError;
+use vulkano::VulkanLibrary;
 use vulkano::{instance::Instance, instance::InstanceCreateInfo};
 use vulkano_win::VkSurfaceBuild;
-use vulkano::swapchain::SwapchainCreationError;
 use winit::event_loop::EventLoop;
 use winit::window::WindowBuilder;
 
@@ -35,7 +35,6 @@ mod fs {
     }
 }
 
-
 #[tokio::main]
 async fn main() -> Result<(), reqwest::Error> {
     let library = VulkanLibrary::new().expect("no local Vulkan library/DLL");
@@ -46,16 +45,18 @@ async fn main() -> Result<(), reqwest::Error> {
             enumerate_portability: true,
             enabled_extensions: required_extensions,
             ..Default::default()
-        }
-    ).expect("failed to create instance");
-
+        },
+    )
+    .expect("failed to create instance");
 
     for physical_device in instance.enumerate_physical_devices().unwrap() {
-        println!("Available device: {}", physical_device.properties().device_name);
-    };
+        println!(
+            "Available device: {}",
+            physical_device.properties().device_name
+        );
+    }
 
-    let event_loop = EventLoop::new();  
-
+    let event_loop = EventLoop::new();
 
     // Had to downgrade winit to 0.27.5 to get this to work
     let surface = WindowBuilder::new()
@@ -64,7 +65,6 @@ async fn main() -> Result<(), reqwest::Error> {
 
     use winit::event::{Event, WindowEvent};
     use winit::event_loop::ControlFlow;
-        
 
     use vulkano::device::DeviceExtensions;
 
@@ -74,7 +74,8 @@ async fn main() -> Result<(), reqwest::Error> {
     };
 
     // make sure we select the best device possible for rendering, prefereably a GPU
-    let (physical_device, queue_family_index) = select_physical_device(&instance, &surface, &device_extensions);
+    let (physical_device, queue_family_index) =
+        select_physical_device(&instance, &surface, &device_extensions);
 
     use vulkano::device::{Device, DeviceCreateInfo, QueueCreateInfo};
 
@@ -91,7 +92,7 @@ async fn main() -> Result<(), reqwest::Error> {
         },
     )
     .expect("failed to create device");
-    
+
     let queue = queues.next().unwrap();
 
     // Settings for the swapchain should be based on the settings of the surface
@@ -108,13 +109,12 @@ async fn main() -> Result<(), reqwest::Error> {
             .0,
     );
 
-
     use vulkano::image::ImageUsage;
     use vulkano::swapchain::{Swapchain, SwapchainCreateInfo};
 
     // To ensure that only complete images are shown, Vulkan uses what is called a swapchain.
     // Basically we draw everything that is going to be rendered on a separate screen before displaying it.
-    let  (mut swapchain, images) = Swapchain::new(
+    let (mut swapchain, images) = Swapchain::new(
         device.clone(),
         surface.clone(),
         SwapchainCreateInfo {
@@ -122,14 +122,14 @@ async fn main() -> Result<(), reqwest::Error> {
             image_format,
             image_extent: dimensions.into(),
             image_usage: ImageUsage {
-                color_attachment: true,  // What the images are going to be used for
+                color_attachment: true, // What the images are going to be used for
                 ..Default::default()
             },
             composite_alpha,
             ..Default::default()
         },
-    ).unwrap();
-
+    )
+    .unwrap();
 
     let vertex1 = Vertex {
         position: [-0.5, -0.5],
@@ -173,15 +173,14 @@ async fn main() -> Result<(), reqwest::Error> {
     );
 
     let mut command_buffers =
-    get_command_buffers(&device, &queue, &pipeline, &framebuffers, &vertex_buffer);
-
+        get_command_buffers(&device, &queue, &pipeline, &framebuffers, &vertex_buffer);
 
     // main()
 
     // Create infinity loop
     let mut window_resized = false;
     let mut recreate_swapchain = false;
-    
+
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent {
             event: WindowEvent::CloseRequested,
@@ -199,9 +198,9 @@ async fn main() -> Result<(), reqwest::Error> {
         Event::RedrawEventsCleared => {
             if window_resized || recreate_swapchain {
                 recreate_swapchain = false;
-            
+
                 let new_dimensions = surface.window().inner_size();
-            
+
                 let (new_swapchain, new_images) = match swapchain.recreate(SwapchainCreateInfo {
                     image_extent: new_dimensions.into(),
                     ..swapchain.create_info()
@@ -212,10 +211,10 @@ async fn main() -> Result<(), reqwest::Error> {
                 };
                 swapchain = new_swapchain;
                 let new_framebuffers = get_framebuffers(&new_images, &render_pass);
-            
+
                 if window_resized {
                     window_resized = false;
-            
+
                     viewport.dimensions = new_dimensions.into();
                     let new_pipeline = get_pipeline(
                         device.clone(),
@@ -236,8 +235,4 @@ async fn main() -> Result<(), reqwest::Error> {
         }
         _ => (),
     });
-
-
 }
-
-

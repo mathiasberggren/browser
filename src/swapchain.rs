@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use vulkano::device::{DeviceExtensions, Device};
 use vulkano::device::physical::{PhysicalDevice, PhysicalDeviceType};
-use vulkano::instance::Instance;
-use vulkano::swapchain::{Surface, Swapchain};
-use vulkano::render_pass::{RenderPass, Framebuffer, FramebufferCreateInfo};
+use vulkano::device::{Device, DeviceExtensions};
 use vulkano::image::view::ImageView;
 use vulkano::image::SwapchainImage;
+use vulkano::instance::Instance;
+use vulkano::render_pass::{Framebuffer, FramebufferCreateInfo, RenderPass};
+use vulkano::swapchain::{Surface, Swapchain};
 use winit::window::Window;
 
 pub fn select_physical_device(
@@ -64,7 +64,6 @@ pub fn get_render_pass(device: Arc<Device>, swapchain: &Arc<Swapchain<Window>>) 
     )
     .unwrap()
 }
-
 
 pub fn get_framebuffers(
     images: &[Arc<SwapchainImage<Window>>],
